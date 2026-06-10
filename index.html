@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Prenatal" />
+  <meta name="theme-color" content="#F7F3EF" />
+  <title>Prenatal Tracker</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green:      #4A7C59;
+      --green-light:#B5D5C0;
+      --green-bg:   #EDF5F0;
+      --tan:        #E8D5C4;
+      --tan-dark:   #7A5C44;
+      --amber:      #B06020;
+      --amber-bg:   #FFF7EC;
+      --text:       #1A1A1A;
+      --muted:      #9A9A9A;
+      --rule:       #EFEFEF;
+      --page-bg:    #F7F3EF;
+      --card-bg:    #FFFFFF;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--page-bg);
+      font-family: 'Georgia', serif;
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: env(safe-area-inset-top, 24px) 20px env(safe-area-inset-bottom, 24px);
+      min-height: 100dvh;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 28px;
+      padding: 36px 28px 32px;
+      width: 100%;
+      max-width: 380px;
+      box-shadow: 0 6px 32px rgba(0,0,0,0.07);
+    }
+
+    /* ── Header ── */
+    .header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .pill {
+      display: inline-block;
+      background: var(--green-bg);
+      color: var(--green);
+      border-radius: 100px;
+      font-family: 'Helvetica Neue', Helvetica, sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      padding: 5px 14px;
+      margin-bottom: 8px;
+    }
+    .date-label {
+      font-family: 'Helvetica Neue', Helvetica, sans-serif;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    /* ── Main action block ── */
+    .action-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    .icon-ring {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s ease;
+    }
+    .icon-ring.done   { background: var(--green-light); }
+    .icon-ring.undone { background: var(--tan); }
+
+    .status-text {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    .status-text.done   { color: #2E6644; }
+    .status-text.undone { color: var(--tan-dark); }
+
+    .take-btn {
+      background: var(--green);
+      color: #fff;
+      border: none;
+      border-radius: 100px;
+      padding: 14px 36px;
+      font-family: 'Helvetica Neue', Helvetica, sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 0.01em;
+      transition: background 0.15s, transform 0.1s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .take-btn:active { background: #3a6347; transform: scale(0.97); }
+
+    .undo-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-family: 'Helvetica Neue', Helvetica, sans-serif;
+      font-size: 13px;
+      cursor: pointer;
+      text-decoration: underline;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ── Streak ── */
+    .streak-bar {
+      background: var(--amber-bg);
+      border-radius: 14px;
+      padding: 11px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    .streak-emoji { font-size: 18px; }
+    .streak-text {
+      font-family: 'Helvetica Neue', Helvetica, sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--amber);
+    }
+
+    /* ── Week row ── */
+    .week-section {
+      border-top: 1px solid var(--rule);
+      padding-top: 22px;
+    }
+    .week-label {
+      font-family: 'Helvetica Neue', Helvetica, sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #C8C8C8;
+      text-align: center;
+      margin-bottom: 14px;
+    }
+    .week-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 4px;
+    }
+    .day-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      flex: 1;
+    }
+    .day-dot {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+    .day-dot.taken      { background: var(--green-light); border: 2px solid transparent; }
+    .day-dot.today-open { background: var(--tan);         border: 2px solid var(--green-light); }
+    .day-dot.missed     { background: #EBEBEB;            border: 2px solid transparent; }
+    .day-dot.today-done { background: var(--green-light); border: 2px solid var(--green); }
+
+    .day-name {
+      font-family: 'Helvetica Neue', Helvetica, sans-serif;
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .day-name.today { color: var(--green); font-weight: 700; }
+
+    /* confetti burst (CSS only) */
+    @keyframes pop { 0%{transform:scale(0.6);opacity:0} 60%{transform:scale(1.15)} 100%{transform:scale(1);opacity:1} }
+    .pop { animation: pop 0.3s ease forwards; }
+
+    /* hide streak bar when empty */
+    .streak-bar[hidden] { display: none; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <div class="pill">prenatal vitamin</div>
+      <div class="date-label" id="dateLabel"></div>
+    </div>
+
+    <div class="action-block" id="actionBlock"></div>
+
+    <div class="streak-bar" id="streakBar" hidden>
+      <span class="streak-emoji">🔥</span>
+      <span class="streak-text" id="streakText"></span>
+    </div>
+
+    <div class="week-section">
+      <div class="week-label">past 7 days</div>
+      <div class="week-row" id="weekRow"></div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'prenatal-log-v1';
+
+    function todayKey() {
+      return new Date().toISOString().slice(0, 10);
+    }
+
+    function loadLog() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
+      catch { return {}; }
+    }
+
+    function saveLog(log) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(log));
+    }
+
+    function getStreak(log) {
+      let streak = 0;
+      const today = todayKey();
+      const d = new Date(today + 'T12:00:00');
+      while (true) {
+        const key = d.toISOString().slice(0, 10);
+        if (key === today && !log[key]) break;
+        if (!log[key]) break;
+        streak++;
+        d.setDate(d.getDate() - 1);
+      }
+      return streak;
+    }
+
+    function formatToday() {
+      return new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+    }
+
+    function getLast7(log) {
+      const days = [];
+      const today = todayKey();
+      const base = new Date(today + 'T12:00:00');
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(base);
+        d.setDate(d.getDate() - i);
+        const key = d.toISOString().slice(0, 10);
+        const letter = d.toLocaleDateString('en-US', { weekday: 'short' }).slice(0, 1);
+        days.push({ key, letter, taken: !!log[key], isToday: key === today });
+      }
+      return days;
+    }
+
+    function render() {
+      const log = loadLog();
+      const today = todayKey();
+      const taken = !!log[today];
+      const streak = getStreak(log);
+
+      // date
+      document.getElementById('dateLabel').textContent = formatToday();
+
+      // action block
+      const ab = document.getElementById('actionBlock');
+      if (taken) {
+        ab.innerHTML = `
+          <div class="icon-ring done pop">
+            <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+              <path d="M10 22.5L18.5 31L34 14" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="status-text done">Taken today ✓</div>
+          <button class="undo-btn" onclick="unmark()">undo</button>
+        `;
+      } else {
+        ab.innerHTML = `
+          <div class="icon-ring undone">
+            <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+              <text x="22" y="31" text-anchor="middle" font-size="26" fill="#7A5C44" font-family="Georgia,serif">?</text>
+            </svg>
+          </div>
+          <div class="status-text undone">Not logged yet</div>
+          <button class="take-btn" onclick="markTaken()">Mark as taken</button>
+        `;
+      }
+
+      // streak
+      const sb = document.getElementById('streakBar');
+      if (streak > 1) {
+        sb.removeAttribute('hidden');
+        document.getElementById('streakText').textContent =
+          `${streak} days in a row`;
+      } else if (streak === 1 && taken) {
+        sb.removeAttribute('hidden');
+        document.getElementById('streakText').textContent = 'First day — keep it up!';
+      } else {
+        sb.setAttribute('hidden', '');
+      }
+
+      // week row
+      const wr = document.getElementById('weekRow');
+      wr.innerHTML = '';
+      getLast7(log).forEach(({ key, letter, taken: t, isToday }) => {
+        let dotClass = 'missed';
+        if (t && isToday) dotClass = 'today-done';
+        else if (t) dotClass = 'taken';
+        else if (isToday) dotClass = 'today-open';
+
+        wr.innerHTML += `
+          <div class="day-col">
+            <div class="day-dot ${dotClass}">
+              ${t ? `<svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M2 6.5L5 9.5L10 3" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>` : ''}
+            </div>
+            <div class="day-name ${isToday ? 'today' : ''}">${letter}</div>
+          </div>
+        `;
+      });
+    }
+
+    function markTaken() {
+      const log = loadLog();
+      log[todayKey()] = true;
+      saveLog(log);
+      render();
+    }
+
+    function unmark() {
+      const log = loadLog();
+      delete log[todayKey()];
+      saveLog(log);
+      render();
+    }
+
+    render();
+  </script>
+</body>
+</html>
